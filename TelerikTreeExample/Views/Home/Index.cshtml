@@ -11,4 +11,61 @@
             .Name("my-picker")
         )
     </div>
+
+    @(Html.Kendo().TreeList<ItemViewModel>()
+        .Name("treelist")
+        .Toolbar(toolbar =>
+        {
+            toolbar.Create();
+            toolbar.Save();
+            toolbar.Cancel();
+        })
+        .Columns(columns =>
+        {
+            columns.Add().Field(e => e.Name).Width(250);
+            columns.Add().Field(e => e.Value).Width(250);
+            columns.Add().Command(c =>
+            {
+                c.CreateChild().Text("Add child");
+                c.Destroy();
+            }).Width(250);
+        })
+        .Events(ev => ev.DataBound("onDataBound"))
+        .Editable(e => e.Mode(TreeListEditMode.InCell).Move(false))
+        .Scrollable(false)
+        .DataSource(dataSource => dataSource
+            .Batch(false)
+            .Read(read => read.Action("GetItems", "Home"))
+@*             .Create(create => create.Action("CreateItems", "Home").Type(HttpVerbs.Post))
+            .Update(update => update.Action("UpdateItems", "Home").Type(HttpVerbs.Post))
+            .Destroy(delete => delete.Action("DestroyItems", "Home").Type(HttpVerbs.Post)) *@
+            .Model(m =>
+            {
+                m.Expanded(true);
+                m.Id(f => f.Id);
+                m.ParentId(f => f.ParentId);
+                m.Field(f => f.Name);
+                m.Field(f => f.Value);
+            })
+        )
+    )
 </div>
+
+<script>
+    //The following code removes the 'Add child' button from the new records,
+    //because they will receive an ID after saving the changes, which means that
+    //no child records  could be added until that
+    function onDataBound(e) {
+        var items = e.sender.items();
+        for (var i = 0; i < items.length; i++) {
+            var row = $(items[i]);
+            var dataItem = e.sender.dataItem(row);
+            if (dataItem.isNew()) {
+                row.find("[data-command='createchild']").hide();
+            }
+            else {
+                row.find("[data-command='createchild']").show();
+            }
+        }
+    }
+</script>
