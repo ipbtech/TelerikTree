@@ -11,7 +11,6 @@ namespace TelerikTreeExample.ViewModels
         [Display(Name = "ItemName")]
         public string Name { get; set; }
 
-        [DataType("Double")]
         [Display(Name = "ItemValue")]
         public double? Value { get; set; }
 

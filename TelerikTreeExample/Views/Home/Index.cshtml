@@ -4,51 +4,56 @@
 
 <div class="text-center">
     <h1 class="display-4">Telerik TreeList</h1>
-
-    <div class="text-center">
-        <h2>Telerik UI DatePicker for ASP.NET Core</h2>
-        @(Html.Kendo().DatePicker()
-            .Name("my-picker")
+    <div style="margin-top:32px">
+        @(
+            Html.Kendo().TreeList<ItemViewModel>()
+                .Name("treelist")
+                .Toolbar(toolbar =>
+                {
+                    toolbar.Separator();
+                    toolbar.Create();
+                    toolbar.Save();
+                    toolbar.Cancel();
+                })
+                .Columns(columns =>
+                {
+                    columns.Add().Field(e => e.Name).Width(200);
+                    columns.Add().Field(e => e.AggregateValue).Width(200)
+                    .Template(
+                        "<span title='Entered value: #= Value #' style='font-weight: #= AggregateValue > 1000 ? \"bold\" : \"normal\" #'>" +
+                            "#= kendo.toString(AggregateValue, AggregateValue % 1 === 0 ? 'n0' : 'n2') #" +
+                        "</span>");
+                    columns.Add().Field(e => e.Value)
+                        .Template("<input class='k-input' name='Value' data-bind='value:Value' />")
+                        .Hidden(true);
+                    columns.Add().Command(c =>
+                    {
+                        c.CreateChild().Text("Add child");
+                        c.Destroy();
+                    }).Width(200);
+            })
+            .Events(ev => ev.DataBound("onDataBound").Edit("onEdit"))
+            .Editable(e => e.Mode(TreeListEditMode.InCell).Move(false))
+            .Scrollable(false)
+            .DataSource(dataSource => dataSource
+                //.Batch(false)
+                //.AutoSync(true)
+                .Read(read => read.Action("GetAllItems", "Home"))
+                .Create(create => create.Action("CreateItem", "Home").Type(HttpVerbs.Post))
+                .Update(update => update.Action("UpdateItem", "Home").Type(HttpVerbs.Post))
+                .Destroy(delete => delete.Action("DestroyItem", "Home").Type(HttpVerbs.Post))
+                .Model(m =>
+                {
+                    m.Expanded(true);
+                    m.Id(f => f.Id);
+                    m.ParentId(f => f.ParentId);
+                    m.Field(f => f.Name);
+                    m.Field(f => f.Value);
+                    m.Field(f => f.AggregateValue);
+                })
+            )
         )
     </div>
-
-    @(Html.Kendo().TreeList<ItemViewModel>()
-        .Name("treelist")
-        .Toolbar(toolbar =>
-        {
-            toolbar.Create();
-            toolbar.Save();
-            toolbar.Cancel();
-        })
-        .Columns(columns =>
-        {
-            columns.Add().Field(e => e.Name).Width(250);
-            columns.Add().Field(e => e.Value).Width(250);
-            columns.Add().Command(c =>
-            {
-                c.CreateChild().Text("Add child");
-                c.Destroy();
-            }).Width(250);
-        })
-        .Events(ev => ev.DataBound("onDataBound"))
-        .Editable(e => e.Mode(TreeListEditMode.InCell).Move(false))
-        .Scrollable(false)
-        .DataSource(dataSource => dataSource
-            .Batch(false)
-            .Read(read => read.Action("GetItems", "Home"))
-@*             .Create(create => create.Action("CreateItems", "Home").Type(HttpVerbs.Post))
-            .Update(update => update.Action("UpdateItems", "Home").Type(HttpVerbs.Post))
-            .Destroy(delete => delete.Action("DestroyItems", "Home").Type(HttpVerbs.Post)) *@
-            .Model(m =>
-            {
-                m.Expanded(true);
-                m.Id(f => f.Id);
-                m.ParentId(f => f.ParentId);
-                m.Field(f => f.Name);
-                m.Field(f => f.Value);
-            })
-        )
-    )
 </div>
 
 <script>
@@ -66,6 +71,14 @@
             else {
                 row.find("[data-command='createchild']").show();
             }
+        }
+    }
+
+    function onEdit(e) {
+        console.log(e.container[0]);
+        if(e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
+            e.container.html("<input name='Value' class='text-box single-line k-valid' data-bind='value:Value'/>");
+            kendo.bind(e.container, e.model);
         }
     }
 </script>

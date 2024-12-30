@@ -13,11 +13,12 @@ builder.Services.AddSession(options =>
 {
     options.Cookie.Name = "TreeList.Content";
     options.IdleTimeout = TimeSpan.FromHours(1);
+    options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<HttpSessionService>();
+builder.Services.AddScoped<HttpSessionStorage>();
 
 
 var app = builder.Build();
