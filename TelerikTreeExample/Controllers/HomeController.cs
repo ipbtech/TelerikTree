@@ -8,12 +8,11 @@ namespace TelerikTreeExample.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly HttpSessionStorage _sessionStorage;
-        public HomeController(HttpSessionStorage sessionStorage, ILogger<HomeController> logger)
+
+        public HomeController(HttpSessionStorage sessionStorage)
         {
             _sessionStorage = sessionStorage;
-            _logger = logger;
         }
 
 
@@ -22,52 +21,48 @@ namespace TelerikTreeExample.Controllers
             return View();
         }
 
-        public JsonResult GetAllItems([DataSourceRequest] DataSourceRequest request)
+        public IActionResult Error()
+        {
+            return View();
+        }
+
+
+
+        public JsonResult GetItems([DataSourceRequest] DataSourceRequest request)
         {
             var itemsResult = _sessionStorage.GetAll()
                 .ToTreeDataSourceResult(request, e => e.Id, e => e.ParentId);
             return Json(itemsResult);
         }
 
-        public JsonResult CreateItem([DataSourceRequest] DataSourceRequest request, ItemViewModel item)
+
+        public JsonResult CreateItems([DataSourceRequest] DataSourceRequest request, 
+            [Bind(Prefix = "models")] IEnumerable<ItemViewModel> items)
         {
             if (ModelState.IsValid)
-            {
-                //foreach (var employee in items)
-                //{
-                //    //employeeDirectory.Insert(employee, ModelState);
-                //}
-            }
+                _sessionStorage.Create(items.ToArray());
 
-            return Json(new[] { item }.ToTreeDataSourceResult(request, ModelState));
+            return Json(items.ToTreeDataSourceResult(request, ModelState));
         }
 
 
-        public JsonResult UpdateItem([DataSourceRequest] DataSourceRequest request, ItemViewModel item)
+        public JsonResult UpdateItems([DataSourceRequest] DataSourceRequest request,
+            [Bind(Prefix = "models")] IEnumerable<ItemViewModel> items)
         {
             if (ModelState.IsValid)
-            {
-                //foreach (var employee in employees)
-                //{
-                //    //employeeDirectory.Update(employee, ModelState);
-                //}
-            }
+                _sessionStorage.Update(items.ToArray());
 
-            return Json(new[] { item }.ToTreeDataSourceResult(request, ModelState));
+            return Json(items.ToTreeDataSourceResult(request, ModelState));
         }
 
 
-        public JsonResult DestroyItem([DataSourceRequest] DataSourceRequest request, ItemViewModel item)
+        public JsonResult DestroyItems([DataSourceRequest] DataSourceRequest request,
+            [Bind(Prefix = "models")] IEnumerable<ItemViewModel> items)
         {
             if (ModelState.IsValid)
-            {
-                //foreach (var employee in employees)
-                //{
-                //    //employeeDirectory.Delete(employee, ModelState);
-                //}
-            }
+                _sessionStorage.Delete(items.ToArray());
 
-            return Json(new[] { item }.ToTreeDataSourceResult(request, ModelState));
+            return Json(items.ToTreeDataSourceResult(request, ModelState));
         }
     }
 }

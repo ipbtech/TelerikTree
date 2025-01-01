@@ -10,38 +10,39 @@
                 .Name("treelist")
                 .Toolbar(toolbar =>
                 {
-                    toolbar.Separator();
-                    toolbar.Create();
+                    toolbar.Create().Text("Add root item");
+                    toolbar.Spacer();
                     toolbar.Save();
+                    toolbar.Separator();
                     toolbar.Cancel();
                 })
                 .Columns(columns =>
                 {
-                    columns.Add().Field(e => e.Name).Width(200);
-                    columns.Add().Field(e => e.AggregateValue).Width(200)
+                    columns.Add().Field(e => e.Name).Width(150);
+                    columns.Add().Field(e => e.AggregateValue).Width(150)
                     .Template(
                         "<span title='Entered value: #= Value #' style='font-weight: #= AggregateValue > 1000 ? \"bold\" : \"normal\" #'>" +
                             "#= kendo.toString(AggregateValue, AggregateValue % 1 === 0 ? 'n0' : 'n2') #" +
                         "</span>");
-                    columns.Add().Field(e => e.Value)
-                        .Template("<input class='k-input' name='Value' data-bind='value:Value' />")
-                        .Hidden(true);
                     columns.Add().Command(c =>
                     {
-                        c.CreateChild().Text("Add child");
+                        c.CreateChild().Text("Add child item");
                         c.Destroy();
-                    }).Width(200);
+                    }).Width(150);
             })
-            .Events(ev => ev.DataBound("onDataBound").Edit("onEdit"))
+            .Events(ev => ev
+                .DataBound("onDataBound")
+                .Edit("onEdit")
+                .Save("onSave"))
             .Editable(e => e.Mode(TreeListEditMode.InCell).Move(false))
             .Scrollable(false)
             .DataSource(dataSource => dataSource
-                //.Batch(false)
+                .Batch(true)
                 //.AutoSync(true)
-                .Read(read => read.Action("GetAllItems", "Home"))
-                .Create(create => create.Action("CreateItem", "Home").Type(HttpVerbs.Post))
-                .Update(update => update.Action("UpdateItem", "Home").Type(HttpVerbs.Post))
-                .Destroy(delete => delete.Action("DestroyItem", "Home").Type(HttpVerbs.Post))
+                .Read(read => read.Action("GetItems", "Home"))
+                .Create(create => create.Action("CreateItems", "Home").Type(HttpVerbs.Post))
+                .Update(update => update.Action("UpdateItems", "Home").Type(HttpVerbs.Post))
+                .Destroy(delete => delete.Action("DestroyItems", "Home").Type(HttpVerbs.Post))
                 .Model(m =>
                 {
                     m.Expanded(true);
@@ -74,9 +75,30 @@
         }
     }
 
+    function onSave(e) {
+        if (e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
+            var model = e.model;
+            var newValue = e.values.Value;
+            console.log(e.container[0]);
+            console.log(model);
+            console.log(newValue);
+        }
+
+        if (newValue !== undefined) {
+            model.set("Value", newValue);
+            model.set("AggregateValue", calculateCalculatedValue(model.Id));
+        }
+
+        function calculateCalculatedValue(id) {
+            var data = $("#treelist").data("kendoTreeList").dataSource.view();
+            var item = data.find(function(item) { return item.Id === id; });
+            return item.Value; // Простая логика, нужно заменить на реальную логику
+        }
+    }
+
     function onEdit(e) {
-        console.log(e.container[0]);
-        if(e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
+        //console.log(e.container[0]);
+        if (e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
             e.container.html("<input name='Value' class='text-box single-line k-valid' data-bind='value:Value'/>");
             kendo.bind(e.container, e.model);
         }

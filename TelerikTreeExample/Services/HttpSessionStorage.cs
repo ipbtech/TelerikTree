@@ -6,40 +6,140 @@ namespace TelerikTreeExample.Services
     public class HttpSessionStorage
     {
         private const string SESSION_KEY = "TreeList.Content";
-        private readonly HttpContext? _httpContext;
+        private readonly ISession? _httpSession;
+        private readonly ILogger<HttpSessionStorage> _logger;
 
-        public HttpSessionStorage(IHttpContextAccessor httpContextAccessor) 
+        public HttpSessionStorage(IHttpContextAccessor httpContextAccessor, ILogger<HttpSessionStorage> logger)
         {
-            _httpContext = httpContextAccessor.HttpContext;
+            _httpSession = httpContextAccessor.HttpContext?.Session;
+            _logger = logger;
         }
 
 
-        public IEnumerable<ItemViewModel>? GetAll()
+        public IEnumerable<ItemViewModel> GetAll()
         {
-            if (!string.IsNullOrEmpty(_httpContext?.Session.GetString(SESSION_KEY)))
+            try
             {
-                var sessionValue = _httpContext.Session.GetString(SESSION_KEY);
+                if (string.IsNullOrEmpty(_httpSession?.GetString(SESSION_KEY)))
+                    IntializeSession();
+
+                var sessionValue = _httpSession?.GetString(SESSION_KEY);
                 var sessionItems = JsonSerializer.Deserialize<IEnumerable<ItemViewModel>>(sessionValue);
                 return sessionItems;
             }
-
-            var items = _items.Value.Select(item =>
+            catch (Exception ex)
             {
-                if (!item.ParentId.HasValue)
-                {
-                    var valueSum = _items.Value.Where(i => i.ParentId == item.Id).Sum(i => i.Value);
-                    item.AggregateValue = valueSum + item.Value;
-                }
-                else
-                {
-                    item.AggregateValue = item.Value;
-                }
-                return item;
-            }).ToList();
+                _logger.LogError(ex, "Something wrong");
+                throw;
+            }
+        }
 
+        public void Create(params ItemViewModel[] createdItems)
+        {
+            try
+            {
+                var items = GetAll().OrderByDescending(i => i.Id).ToList();
+                int itemsIdIncrement = items.FirstOrDefault()?.Id ?? 0;
+                var newItemIds = new List<int>(createdItems.Length);
+
+                foreach (var created in createdItems)
+                {
+                    itemsIdIncrement++;
+                    created.Id = itemsIdIncrement;
+                    items.Add(created);
+                    newItemIds.Add(created.Id);
+                }
+
+                items.ForEach(i => i.AggregateValue = CalculateAggregateValue(i, items));
+                var json = JsonSerializer.Serialize<IEnumerable<ItemViewModel>>(items);
+
+                _httpSession?.SetString(SESSION_KEY, json);
+                _logger.LogInformation("New items with Ids:{@Ids} were created successful and were added to the session storage",
+                    string.Join("; ", newItemIds));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong");
+                throw;
+            }
+        }
+
+        public void Update(params ItemViewModel[] updatedItems)
+        {
+            try
+            {
+                var items = GetAll().ToList();
+                foreach (var updated in updatedItems)
+                {
+                    var existed = items.FirstOrDefault(i => i.Id == updated.Id);
+                    if (existed is null)
+                        return;
+
+                    existed.Name = updated.Name;
+                    existed.Value = updated.Value;
+                }
+
+                items.ForEach(i => i.AggregateValue = CalculateAggregateValue(i, items));
+                var json = JsonSerializer.Serialize<IEnumerable<ItemViewModel>>(items);
+
+                _httpSession?.SetString(SESSION_KEY, json);
+                _logger.LogInformation("Items with Ids:{@Ids} were updated successful",
+                    string.Join("; ", updatedItems.Select(i => i.Id)));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong");
+                throw;
+            }
+        }
+
+
+        public void Delete(params ItemViewModel[] deletedItems)
+        {
+            try
+            {
+                var items = GetAll().ToList();
+                foreach(var deleted in deletedItems)
+                {
+                    var existed = items.FirstOrDefault(i => i.Id == deleted.Id);
+                    if (existed is null)
+                        return;
+
+                    items.Remove(existed);
+                }
+
+                items.ForEach(i => i.AggregateValue = CalculateAggregateValue(i, items));
+                var json = JsonSerializer.Serialize<IEnumerable<ItemViewModel>>(items);
+
+                _httpSession?.SetString(SESSION_KEY, json);
+                _logger.LogInformation("Items with Ids:{@Ids} were deleted successful",
+                    string.Join("; ", deletedItems.Select(i => i.Id)));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Something wrong");
+                throw;
+            }
+        }
+
+
+        private void IntializeSession()
+        {
+            var items = _items.Value.ToList();
+            foreach(var item in items)
+            {
+                item.AggregateValue = CalculateAggregateValue(item, items);
+            }
             var json = JsonSerializer.Serialize<IEnumerable<ItemViewModel>>(items);
-            _httpContext?.Session.SetString(SESSION_KEY, json);
-            return items;
+            _httpSession?.SetString(SESSION_KEY, json);
+            _logger.LogInformation("Session was intialized with initial data");
+        }
+
+        private double CalculateAggregateValue(ItemViewModel currentItem, IEnumerable<ItemViewModel> allItems)
+        {
+            var childValues = allItems.Where(i => i.ParentId == currentItem.Id)
+                .Select(i => CalculateAggregateValue(i, allItems)).Sum();
+            return currentItem.Value.HasValue ? currentItem.Value.Value + childValues : childValues;
         }
 
 
