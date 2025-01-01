@@ -21,7 +21,7 @@
                     columns.Add().Field(e => e.Name).Width(150);
                     columns.Add().Field(e => e.AggregateValue).Width(150)
                     .Template(
-                        "<span title='Entered value: #= Value #' style='font-weight: #= AggregateValue > 1000 ? \"bold\" : \"normal\" #'>" +
+                        "<span title='Entered value: #= Value #' style='font-weight: #= AggregateValue >= 1000 ? \"bold\" : \"normal\" #'>" +
                             "#= kendo.toString(AggregateValue, AggregateValue % 1 === 0 ? 'n0' : 'n2') #" +
                         "</span>");
                     columns.Add().Command(c =>
@@ -75,27 +75,22 @@
         }
     }
 
+    // To bind entered value in table cell to the Value field and to show it until pressing save button
     function onSave(e) {
+        //console.log(e.container[0]);
         if (e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
             var model = e.model;
             var newValue = e.values.Value;
-            console.log(e.container[0]);
-            console.log(model);
-            console.log(newValue);
-        }
 
-        if (newValue !== undefined) {
-            model.set("Value", newValue);
-            model.set("AggregateValue", calculateCalculatedValue(model.Id));
-        }
-
-        function calculateCalculatedValue(id) {
-            var data = $("#treelist").data("kendoTreeList").dataSource.view();
-            var item = data.find(function(item) { return item.Id === id; });
-            return item.Value; // Простая логика, нужно заменить на реальную логику
+            if (newValue !== undefined) {
+                model.set("Value", newValue);
+                model.set("AggregateValue", newValue);
+            }
         }
     }
 
+
+    // To replace and bind value to the input, because in default view I show aggregate value
     function onEdit(e) {
         //console.log(e.container[0]);
         if (e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
