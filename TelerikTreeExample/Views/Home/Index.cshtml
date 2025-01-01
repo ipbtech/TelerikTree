@@ -61,6 +61,7 @@
     //The following code removes the 'Add child' button from the new records,
     //because they will receive an ID after saving the changes, which means that
     //no child records  could be added until that
+    // This code was copied from Telerik examples
     function onDataBound(e) {
         var items = e.sender.items();
         for (var i = 0; i < items.length; i++) {
@@ -74,6 +75,7 @@
             }
         }
     }
+
 
     // To bind entered value in table cell to the Value field and to show it until pressing save button
     function onSave(e) {
