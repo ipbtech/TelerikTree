@@ -80,15 +80,14 @@
     // To bind entered value in table cell to the Value field and to show it until pressing save button
     function onSave(e) {
         //console.log(e.container[0]);
-        if (e.container[0].getAttribute('data-container-for') == 'AggregateValue') {
-            var model = e.model;
-            var newValue = e.values.Value;
-
-            if (newValue !== undefined) {
-                model.set("Value", newValue);
-                model.set("AggregateValue", newValue);
-            }
+        var model = e.model;
+        var val = e.values.Value;
+        if (val != undefined) {
+            model.set("Value", val);
+            model.set("AggregateValue", val);
         }
+        console.log(val);
+        console.log(model);
     }
 
 
