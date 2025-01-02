@@ -1,5 +1,5 @@
 # TelerikTree
-Try to love Telerik UI
+Тестовое задание Setl Tech
 
 ## Technologies
 1. .NET6
