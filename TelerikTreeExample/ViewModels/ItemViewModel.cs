@@ -13,11 +13,9 @@ namespace TelerikTreeExample.ViewModels
         [Display(Name = "ItemName")]
         public string Name { get; set; }
 
-        [DataType("Decimal")]
         public double? Value { get; set; }
 
         [Display(Name = "ItemValue")]
-        [DataType("Decimal")]
         public double? AggregateValue { get; set; }
     }
 }

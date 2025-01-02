@@ -20,10 +20,10 @@
                 {
                     columns.Add().Field(e => e.Name).Width(150);
                     columns.Add().Field(e => e.AggregateValue).Width(150)
-                    .Template(
-                        "<span title='Entered value: #= Value #' style='font-weight: #= AggregateValue >= 1000 ? \"bold\" : \"normal\" #'>" +
-                            "#= kendo.toString(AggregateValue, AggregateValue % 1 === 0 ? 'n0' : 'n2') #" +
-                        "</span>");
+                        .Template(
+                            "<span title='Entered value: #= Value #' style='font-weight: #= AggregateValue >= 1000 ? \"bold\" : \"normal\" #'>" +
+                                "#= kendo.toString(AggregateValue, AggregateValue % 1 === 0 ? 'n0' : 'n2') #" +
+                            "</span>");
                     columns.Add().Command(c =>
                     {
                         c.CreateChild().Text("Add child item");
@@ -81,13 +81,14 @@
     function onSave(e) {
         //console.log(e.container[0]);
         var model = e.model;
-        var val = e.values.Value;
-        if (val != undefined) {
+        //console.log(e.values.Value);
+        if (e.values.Value != undefined) {
+            var val = e.values.Value;
+            console.log(val);
             model.set("Value", val);
             model.set("AggregateValue", val);
         }
-        console.log(val);
-        console.log(model);
+        console.log(JSON.stringify(model));
     }
 
 

@@ -47,7 +47,7 @@ namespace TelerikTreeExample.Controllers
 
 
         public JsonResult UpdateItems([DataSourceRequest] DataSourceRequest request,
-            [Bind(Prefix = "models")] IEnumerable<ItemViewModel> items)
+            [Bind(Prefix = "models")] [FromForm] IEnumerable<ItemViewModel> items)
         {
             if (ModelState.IsValid)
                 _sessionStorage.Update(items.ToArray());

@@ -1,13 +1,23 @@
+using Microsoft.AspNetCore.Localization;
 using TelerikTreeExample.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
-    .AddJsonOptions(opt => opt.JsonSerializerOptions.PropertyNamingPolicy = null);
+    .AddJsonOptions(opt =>
+    {
+        // turn off standart serialization for property names because telerik doesn't match camelCase
+        opt.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 
-builder.Services.AddKendo();
+// add localization because I ran into with telerik problem when it doesn't match double fields
+builder.Services.Configure<RequestLocalizationOptions>(opt =>
+{
+    opt.DefaultRequestCulture = new RequestCulture("en-US");
+});
 
+builder.Services.AddKendo(); // telerik & kendo
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -30,6 +40,8 @@ app.UseHsts();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseRequestLocalization(); // add localization because I ran into with telerik problem when it doesn't match double fields
 app.UseSession();
 
 app.MapControllerRoute(
